@@ -1,0 +1,649 @@
+# 女同胞对女性抗议歧视的反应 {#protest}
+
+
+## 引言
+
+本文系重复《Women’s reactions to ingroup members who protest discriminatory treatment》(Eur. J. Soc. Psychol. 40, 733–745 (2010) )这篇文章的学习笔记。
+[原文链接](https://onlinelibrary.wiley.com/doi/abs/10.1002/ejsp.644)。
+
+
+## 加载宏包
+
+首先，我们加载需要的宏包，比如数据探索的tidyverse、统计分析的broom、可视化辅助的ggridges、心理学用的比较多psych、贝叶斯分析的brms
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(broom)
+library(ggridges)
+library(psych)
+library(brms)
+```
+
+
+
+## 导入数据
+
+论文的数据存放在`./data/psy/protest.csv`，我们直接用`read_csv()`函数读取，注意读取的路径
+
+```{r}
+d <- read_csv("data/psy/protest.csv")
+d
+```
+
+```{r}
+dplyr::glimpse(d)
+```
+
+## 数据变换
+
+这个数据集包含了129个观测和5个变量
+
+| 变量     | 含义                             |
+|:---------|:---------------------------------|
+| protest  | 0-不抗议、1-个人抗议、2-集体抗议 |
+| sexism   | 被试对歧视普遍性的评价           |
+| anger    | 被试对抗议者的讨厌程度           |
+| liking   | 被试对抗议者的喜欢程度           |
+| respappr | 被试对抗议者的行为恰当性评价     |
+
+
+
+我们发现原始数据中`抗议类型`protest是数值型，为了方便分析，需要转换为**分类变量**
+
+```{r}
+d <- d %>%
+  mutate_at(vars(protest), as.factor)
+
+d
+```
+
+
+数据已经是清洗干净的，节省了我们不少体力。下面进入探索性分析的环节。
+
+
+## 探索性分析
+
+### 方差分析
+
+我们已经知道`protest`(抗议类型)有三组，那么，
+
+- 统计每组的观察量是多少？
+- 每组下的`sexism`(被试对歧视普遍性的评价)的均值和方差是多少？
+
+
+```{r}
+d %>%
+  group_by(protest) %>%
+  summarise(
+    n = n(),
+    mean = mean(sexism, na.rm = TRUE),
+    sd = sd(sexism, na.rm = TRUE)
+  )
+```
+
+
+
+当然，也可以一次性对`sexism`, `anger`, `liking`, `respappr`做分组描述性统计
+```{r}
+d %>%
+  group_by(protest) %>%
+  summarise_at(
+    vars(sexism, anger, liking, respappr),
+    list(
+      mean = mean # ,
+      # sd = sd
+    ),
+    na.rm = TRUE
+  )
+```
+
+
+
+可视化
+
+```{r}
+d %>%
+  ggplot(aes(x = sexism, y = protest, fill = protest)) +
+  # geom_density_ridges(alpha = 0.5)
+  stat_density_ridges(
+    quantile_lines = TRUE,
+    quantiles = 2,
+    alpha = 0.7
+  )
+```
+
+
+方差分析？（原文中并没有做方差分析，我这里只是测试下）。分析方法参考[这里](http://www.sthda.com/english/wiki/one-way-anova-test-in-r)
+
+```{r}
+d %>%
+  aov(sexism ~ protest, data = .) %>%
+  broom::tidy()
+```
+
+```{r}
+d %>%
+  aov(sexism ~ protest, data = .) %>%
+  TukeyHSD()
+```
+
+
+p值都很大，不能拒绝零假设，即，没有足够证据证明三者是显著不同的。事实上，这正是我们需要的，因为，对公司歧视普遍性的评价，不会因为**抗议者抗议类型**而改变。
+
+
+
+
+
+### 操控检查
+
+均值和文章总的计算结果不一致，可能我没懂作者的意思。经过刘伟彪同学提醒，文章中这段文字是对**操控检查**做的方差分析，而操控检查的原始问卷数据，我们是没有的，因此只有跳过这个环节。
+
+
+
+### 调节效应的回归检验
+
+**考察调制效应就是看变量之间的交互项是否显著**。
+
+因此，检验调节效应，需要验证两个问题
+
+(1) 抗议类型是否影响**被试**对她行为的评价, 即，protest是否影响respappr
+
+(2) protest影响anger/likings是否受到sexism的调节。调节是主要是看交互项，即，考察相互项protest:sexism的调制作用是否显著
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/02.png")
+```
+
+为此，作者构建了调节的多元回归模型（moderated multiple regressions, MMR)，
+（这个时候没有中介，都是简单的线性模型）。具体分析步骤如下：
+
+
+- 对抗议者的态度作为响应变量
+- 抗议类型构造出两个新变量 Response Choice 和 Protest Type 
+- 歧视普遍性变量中心化
+- 将抗议类型，歧视普遍性，以及两者交互作用，作为自变量
+
+
+由抗议类型构造出两个新变量 Response Choice 和 Protest Type，示意如下
+```{r echo=FALSE, out.width = "70%"}
+knitr::include_graphics(path = "images/img_model/03.png")
+```
+
+
+多元回归模型模型：
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/040.png")
+```
+
+
+代码实现如下：
+
+```{r}
+d1 <- d %>%
+  mutate(sexism = sexism - mean(sexism)) %>% # 中心化
+  mutate(Response_Choice = case_when( # 构造新变量
+    protest == 0 ~ -2 / 3,
+    protest == 1 ~ 1 / 3,
+    protest == 2 ~ 1 / 3
+  )) %>%
+  mutate(Protest_Type = case_when(
+    protest == 0 ~ 0,
+    protest == 1 ~ -1 / 2,
+    protest == 2 ~ 1 / 2
+  ))
+
+d1
+```
+下面逐个变量进行分析。
+
+#### 对抗议者的态度--anger
+
+多元线性回归模型
+```{r}
+d1 %>%
+  lm(anger ~ Response_Choice * sexism + Protest_Type * sexism, data = .) %>%
+  broom::tidy()
+```
+
+
+（R语法就是这么简单，感受到强大了吧）
+
+看到两个变量（sexism，Protest_Type，sexism:Protest_Type）的系数没有通过p值检验.
+
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/041.png")
+```
+
+
+那么我们就看看通过检验的Response_Choice。实际上，response_choice分成了不抗议和抗议（-2/3， 1/3）两种，那么这两个情况下下，anger分别随着歧视普遍性sexism的变化怎么变化呢？
+
+
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  summarise(
+    n = n(),
+    mean = mean(anger, na.rm = TRUE),
+    sd = sd(anger, na.rm = TRUE)
+  )
+```
+
+
+
+```{r}
+d1 %>%
+  ggplot(aes(x = sexism, y = anger, color = as.factor(Response_Choice))) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  ggtitle("Response to sexism varies as type of protest") +
+  scale_color_discrete(name = "Response_Choice", labels = c("不抗议", "抗议"))
+```
+
+我们看看回归方程的系数
+```{r}
+r_mod <- function(df) {
+  lm(anger ~ sexism, data = df)
+}
+
+d1 %>%
+  group_nest(Response_Choice) %>%
+  mutate(model = map(data, r_mod)) %>%
+  mutate(glance = map(model, broom::tidy)) %>%
+  unnest(glance)
+```
+
+
+对比原文中的图1，结果是一样的。原文中说要对sexism中心化，但为啥又不用呢，好奇怪。
+
+
+当然以上分组求回归系数，tidyverse有更简练的写法（数据框进，数据框出，太酷了）
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  group_modify(
+    ~ lm(anger ~ sexism, data = .) %>%
+      broom::tidy()
+  )
+```
+
+
+#### 对抗议者的态度--liking
+
+我们再开看看liking的情形，同理再回顾下MMR模型
+
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/040.png")
+```
+
+
+```{r}
+d1 %>%
+  lm(liking ~ Response_Choice * sexism + Protest_Type * sexism, data = .) %>%
+  broom::tidy()
+```
+
+我们发现两个变量（Protest_Type，sexism:Protest_Type）仍然没有通过p值检验（pvalue分别是0.98和0.65）
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/041.png")
+```
+
+那么我们就再看看通过检验的Response_Choice。实际上，response_choice分成了抗议和不抗议两种，那么这两个情况下下，liking 分别随着歧视普遍性sexism的变化怎么变化呢？
+
+
+
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  summarise(
+    n = n(),
+    mean = mean(liking, na.rm = TRUE),
+    sd = sd(liking, na.rm = TRUE)
+  )
+```
+
+
+
+
+
+```{r}
+d1 %>%
+  ggplot(aes(x = sexism, y = liking, color = as.factor(Response_Choice))) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  ggtitle("Response to sexism varies as type of protest") +
+  scale_color_discrete(name = "Response_Choice", labels = c("不抗议", "抗议"))
+```
+
+我们看看回归方程的系数
+
+```{r, eval=FALSE, include=FALSE}
+r_mod <- function(df) {
+  lm(liking ~ sexism, data = df)
+}
+
+d1 %>%
+  group_nest(Response_Choice) %>%
+  mutate(model = map(data, r_mod)) %>%
+  mutate(glance = map(model, broom::tidy)) %>%
+  unnest(glance)
+```
+
+
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  group_modify(
+    ~ lm(liking ~ sexism, data = .) %>%
+      broom::tidy()
+  )
+```
+
+
+#### 对抗议者行为恰当性的评价--respappr
+
+再来看看sexism 调节 **对抗议者行为恰当性的评价** 的效应
+
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  summarise(
+    n = n(),
+    mean = mean(respappr, na.rm = TRUE),
+    sd = sd(respappr, na.rm = TRUE)
+  )
+```
+
+
+再次回到MMR模型(注意Y变量换成了respappr)，
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/050.png")
+```
+
+
+```{r}
+d1 %>%
+  lm(respappr ~ Response_Choice * sexism + Protest_Type * sexism, data = .) %>%
+  broom::tidy()
+```
+仍然看到交互项 sexism:Protest_Type 效应不显著，而交互项 Response_Choice:sexism 效应明显(0.86)
+
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/051.png")
+```
+
+
+
+```{r}
+d1 %>%
+  ggplot(aes(x = sexism, y = respappr, color = as.factor(Response_Choice))) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  ggtitle("Response to sexism varies as type of protest") +
+  scale_color_discrete(name = "Response_Choice", labels = c("不抗议", "抗议"))
+```
+
+我们看看回归方程的系数
+
+```{r, eval=FALSE, include=FALSE}
+r_mod <- function(df) {
+  lm(respappr ~ sexism, data = df)
+}
+
+d1 %>%
+  group_nest(Response_Choice) %>%
+  mutate(model = map(data, r_mod)) %>%
+  mutate(glance = map(model, broom::tidy)) %>%
+  unnest(glance)
+```
+
+```{r}
+d1 %>%
+  group_by(Response_Choice) %>%
+  group_modify(
+    ~ lm(respappr ~ sexism, data = .) %>%
+      broom::tidy()
+  )
+```
+
+
+
+回归方程的系数依然是一正一负，Response_Choice主效应明显
+
+
+
+至此，两个需要验证的问题探索完毕！
+
+
+
+
+
+### 中介效应的检验
+
+
+
+前面通过多元回归模型验证了**调节效应**
+
+1. sexism通过Response_Choice : sexism相互作用，调制Response_Choice对anger/liking的影响，同时也发现
+
+2. sexism通过Response_Choice : sexism相互作用，调制Response_Choice对respappr的影响
+
+
+这节检验变量respappr**中介效应**，我们将中介respappr直接加的MMR模型中
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/080.png")
+```
+
+
+
+```{r}
+d1 %>%
+  lm(anger ~ respappr + Response_Choice * sexism + Protest_Type * sexism, data = .) %>%
+  broom::tidy()
+```
+
+
+
+```{r}
+d1 %>%
+  lm(liking ~ respappr + Response_Choice * sexism + Protest_Type * sexism, data = .) %>%
+  broom::tidy()
+```
+
+
+
+
+当中介变量加入后，通过MMR模型计算得出
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/081.png")
+```
+
+
+- anger对应的交互项Response_Choice:sexism从-1.08变为-0.63
+- liking对应的交互项Response_Choice:sexism从0.83变为0.52
+
+即随着中介的加入，调制效应减弱了，说明了调节的中介模型的合理性？
+
+
+
+
+
+
+### 有调节的中介模型
+
+
+$$
+\begin{aligned}
+\text{respappr}  & \sim  \text{Response-Choice} \times \text{sexism} \\
+\text{anger}  & \sim   \text{respappr} +  \text{Response-Choice}  \times \text{sexism}
+\end{aligned}
+$$
+
+```{r echo=FALSE, out.width = "80%"}
+knitr::include_graphics(path = "images/img_model/120.png")
+```
+
+
+这里我用psych宏包分别实现下
+
+
+
+```{r psych_mediate, echo=1:5, fig.height = 10}
+mediation_psych <-
+  psych::mediate(anger ~ (respappr) + Response_Choice * sexism,
+    data = d1,
+    n.iter = 500,
+    main = "Moderated mediation (mean centered)"
+  )
+
+print(mediation_psych, short = F, digits = 3)
+```
+
+
+
+
+
+## 文章之外
+
+处理psych模型能实现中介模型，还有很多宏包也能实现
+
+- psych
+- mediation
+- lavaan
+- brms
+
+
+
+### mediation
+
+```{r}
+library(mediation)
+
+
+model_mediator <-
+  lm(respappr ~ Response_Choice * sexism, data = d1)
+
+model_outcome <- lm(anger ~ respappr + Response_Choice * sexism, data = d1)
+
+
+mediation_result <- mediate(
+  model_mediator,
+  model_outcome,
+  sims = 500,
+  treat = "Response_Choice",
+  mediator = "respappr"
+)
+```
+
+
+
+```{r mediation_summary}
+summary(mediation_result)
+plot(mediation_result)
+```
+
+
+
+
+
+### 用lavaan包
+
+```{r lavaan}
+library(lavaan)
+library(semPlot)
+
+sem_model <- "
+  respappr ~ Response_Choice + sexism + Response_Choice:sexism
+  anger ~ respappr + Response_Choice + sexism + Response_Choice:sexism
+
+"
+
+lavaan_model <- sem(sem_model,
+  data = d1,
+  bootstrap = 500
+)
+summary(lavaan_model, rsq = T) # compare with ACME in mediation
+
+
+# semPlot::semPaths(model_sem)
+semPaths(
+  lavaan_model,
+  whatLabels = "std", 
+  intercepts = TRUE, 
+  style = "lisrel",
+  nCharNodes = 0,
+  nCharEdges = 0,
+  curveAdjacent = TRUE,
+  title = TRUE,
+  layout = "tree2",
+  curvePivot = TRUE
+)
+```
+
+
+### 全贝叶斯模型
+
+贝叶斯结构方程模型(Bayesian Structural Equation Modelling)，我会在下一章专门讲。
+
+```{r}
+library(brms)
+
+model_mediator <- bf(respappr ~ Response_Choice * sexism)
+model_outcome <- bf(anger ~ respappr + Response_Choice * sexism)
+
+brms_result <- brm(model_mediator + model_outcome + set_rescor(FALSE),
+  data = d1,
+  cores = 2
+)
+```
+
+```{r}
+plot(brms_result)
+```
+
+
+```{r}
+tidy(brms_result) %>%
+  mutate_if(is.numeric, ~ round(., 3))
+```
+和psych的计算结果一致
+
+
+
+
+```{r}
+print(sjstats::mediation(brms_result), digits = 4)
+```
+
+
+
+```{r}
+pp_check(brms_result, resp = "anger") + ggtitle("Outcome")
+```
+
+
+
+
+```{r}
+pp_check(brms_result, resp = "respappr") + ggtitle("Mediator")
+```
+
+
+ 
+```{r, echo = F}
+# remove the objects
+rm(brms_result, d, d1, lavaan_model, mediation_psych, mediation_result, model_mediator,   model_outcome, r_mod, sem_model)
+#rm(list = ls()) 
+```
+
+```{r, echo = F, message = F, warning = F, results = "hide"}
+pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
+```
+

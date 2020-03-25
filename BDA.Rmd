@@ -1,0 +1,10 @@
+# 贝叶斯数据分析 {#BDA}
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+library(brms)
+library(rstan)
+```
+
+

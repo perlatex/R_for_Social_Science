@@ -1,0 +1,19 @@
+%<TpX v="3" l="31.4265" t="81.2358" r="197.124" b="13.611" TeXFormat="png" PdfTeXFormat="png" ArrowsSize="0.7" StarsSize="1" DefaultFontHeight="5" DefaultSymbolSize="30" PicScale="1" Border="2" PicUnitLength="0.05" HatchingStep="2" DottedSize=".5" DashSize="1" TeXMinLine="0.1" LineWidth="0.3">
+%  <text x="33.3909" y="67.1651" t="sexism" h="6"/>
+%  <text x="161.124" y="27.6321" t="anger/liking" h="6"/>
+%  <text x="32.8939" y="54.9974" t="Response_Choice" h="5"/>
+%  <text x="31.9601" y="25.9167" t="Protest_Type " h="5"/>
+%  <text x="32.2269" y="40.4571" t="Response_Choice:sexism" h="5"/>
+%  <text x="31.4265" y="14.311" t="Protest_Type:sexism" h="5"/>
+%  <line x1="80.2502" y1="69.8313" x2="156.421" y2="35.9482" arr2="h44"/>
+%  <line x1="82.518" y1="55.5577" x2="160.289" y2="32.6133" arr2="h44"/>
+%  <line x1="88.1207" y1="40.0835" x2="156.287" y2="30.4789" arr2="h44"/>
+%  <line x1="91.3223" y1="15.9385" x2="155.353" y2="27.0105" arr2="h44"/>
+%  <line x1="90.6553" y1="27.0105" x2="150.284" y2="29.4117" arr2="h44"/>
+%  <text x="146.128" y="76.0758" t="respappr" h="6"/>
+%  <line x1="152.626" y1="74.4167" x2="163.134" y2="39.4359" arr2="h44"/>
+%</TpX>
+\begin{figure}
+\centering
+  \includegraphics[width=16.970cm,height=7.162cm]{08.png}
+\end{figure}

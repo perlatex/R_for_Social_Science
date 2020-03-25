@@ -1,0 +1,8 @@
+# 案例分析 {#eda}
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+

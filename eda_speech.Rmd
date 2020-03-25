@@ -1,0 +1,38 @@
+# 贝叶斯数据分析在语音学中的应用 {#speech}
+
+
+## 引言
+
+本文系重复《Bayesian data analysis in the phonetic sciences: A tutorial
+introduction》(Journal of Phonetics, Volume 71, November 2018, Pages 147-161 )这篇文章的学习笔记。
+
+- [原文链接](https://osf.io/g4zpv/)
+- [作者github](https://github.com/vasishth/jopbayes)
+- [作者主页](https://vasishth.github.io/)
+- [贝叶斯课件](https://vasishth.github.io/IntroductionBayes/)
+
+
+打开里面会有很多惊喜喔。
+
+## 文章中关于语音学的理论
+
+## 加载宏包
+
+首先，我们加载需要的宏包，比如数据探索的tidyverse、统计分析的broom、可视化辅助的ggridges、贝叶斯分析的brms
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(broom)
+library(ggridges)
+library(brms)
+```
+
+
+
+## 导入数据
+
+马上回来，敬请期待
+
+
+

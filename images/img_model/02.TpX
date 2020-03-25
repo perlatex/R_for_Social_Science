@@ -1,0 +1,15 @@
+%<TpX v="3" l="46.0637" t="90.5166" r="159.106" b="58.6742" TeXFormat="png" PdfTeXFormat="png" ArrowsSize="0.7" StarsSize="1" DefaultFontHeight="5" DefaultSymbolSize="30" PicScale="1" Border="2" PicUnitLength="0.05" HatchingStep="2" DottedSize=".5" DashSize="1" TeXMinLine="0.1" LineWidth="0.3">
+%  <text x="46.0637" y="82.6393" t="sexism" h="5"/>
+%  <text x="46.1901" y="59.8189" t="protest" h="6"/>
+%  <text x="123.106" y="59.5142" t="anger/liking" h="6"/>
+%  <text x="84.6949" y="85.3566" t="respappr" h="6"/>
+%  <line x1="68.7215" y1="64.7664" x2="90.7307" y2="82.222" arr2="h44" lw="2.00"/>
+%  <line x1="97.1058" y1="81.7666" x2="119.115" y2="64.9182" arr2="h44" lw="2.00"/>
+%  <line x1="67.5072" y1="59.7574" x2="119.419" y2="59.6056" arr2="h44" lw="2.00"/>
+%  <curve arr2="h44" lw="2.00" lc="red">61.7393,83.4362 71.4537,83.2845 81.1681,76.9094 81.6231,76.1895</curve>
+%  <curve arr2="h44" lw="2.00" lc="red">61.8911,81.463 67.2037,78.2755 72.668,72.8111 75.8556,67.6503 78.1324,60.8199</curve>
+%</TpX>
+\begin{figure}
+\centering
+  \includegraphics[width=11.704cm,height=3.584cm]{wx.png}
+\end{figure}

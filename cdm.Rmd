@@ -1,0 +1,8 @@
+# 认知诊断模型 {#cdm}
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+

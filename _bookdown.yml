@@ -1,0 +1,35 @@
+book_filename: R4SS
+clean: [packages.bib, bookdown.bbl]
+language:
+  label:
+    fig: "图 "
+    tab: "表 "
+  ui:
+    edit: "编辑"
+    chapter_name: ["第 ", " 章"]
+
+rmd_files: [
+  "index.Rmd",
+  "author.Rmd",
+
+  "basic.Rmd",
+  "visual.Rmd",
+  "probability.Rmd",
+  "bayesian.Rmd",
+  "BDA.Rmd",
+  "lm.Rmd",
+  "glm.Rmd",
+  "lmm.Rmd",
+  "sem.Rmd",
+  "cdm.Rmd",
+  "tidymodels.Rmd",
+  "eda.Rmd",
+
+  "eda_protest.Rmd",
+  "eda_attention.Rmd",
+  "eda_speech.Rmd",
+
+
+  "Appendix.Rmd",
+  "references.Rmd"
+]

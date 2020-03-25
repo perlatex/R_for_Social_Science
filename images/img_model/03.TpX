@@ -1,0 +1,21 @@
+%<TpX v="3" l="14.6095" t="99.4175" r="126.665" b="42.0489" TeXFormat="png" PdfTeXFormat="png" ArrowsSize="0.7" StarsSize="1" DefaultFontHeight="5" DefaultSymbolSize="30" PicScale="1" Border="2" PicUnitLength="0.05" HatchingStep="2" DottedSize=".5" DashSize="1" TeXMinLine="0.1" LineWidth="0.3">
+%  <text x="14.6095" y="81.1873" t="protest" h="6"/>
+%  <text x="46.0335" y="81.1949" t="Response_Choice " h="5"/>
+%  <text x="96.6654" y="81.4524" t="Protest_Type" h="5"/>
+%  <text x="19.087" y="70.7252" t="" tex="0 \\  1  \\  2" h="5"/>
+%  <text x="23.6353" y="69.8671" t="0" h="5" jv="b"/>
+%  <text x="23.7211" y="57.4236" t="1" h="5"/>
+%  <text x="23.3778" y="42.7489" t="2" h="5"/>
+%  <text x="54.0144" y="70.2962" t="-2/3" h="5"/>
+%  <text x="56.074" y="57.7669" t="1/3" h="5"/>
+%  <text x="56.4173" y="42.8348" t="1/3" h="5"/>
+%  <text x="108.766" y="70.7252" t="0" h="5"/>
+%  <text x="104.046" y="57.1662" t="-1/2" h="5"/>
+%  <text x="106.019" y="43.3497" t="1/2" h="5"/>
+%  <curve arr2="h44">28.5022,88.593 46.6419,92.5202 59.6389,87.284</curve>
+%  <curve arr2="h44">26.5386,88.8736 28.2217,90.1826 52.6261,98.8784 101.622,88.967</curve>
+%</TpX>
+\begin{figure}
+\centering
+  \includegraphics[width=11.606cm,height=6.137cm]{03.png}
+\end{figure}

@@ -1,0 +1,27 @@
+%<TpX v="3" l="32.9182" t="97.8275" r="202.24" b="-38.9602" TeXFormat="png" PdfTeXFormat="png" ArrowsSize="0.7" StarsSize="1" DefaultFontHeight="5" DefaultSymbolSize="30" PicScale="1" Border="2" PicUnitLength="0.05" HatchingStep="2" DottedSize=".5" DashSize="1" TeXMinLine="0.1" LineWidth="0.3">
+%  <text x="33.3909" y="67.1651" t="sexism" h="6"/>
+%  <text x="166.24" y="41.4585" t="anger/liking" h="6"/>
+%  <text x="33.447" y="54.3061" t="Response_Choice" h="5"/>
+%  <text x="32.9182" y="41.978" t="Response_Choice:sexism" h="5"/>
+%  <text x="139.491" y="92.6675" t="respappr" h="6"/>
+%  <line x1="68.0083" y1="69.1045" x2="134.375" y2="91.9181" arr2="h44"/>
+%  <line x1="78.3781" y1="55.2781" x2="134.237" y2="87.9084" arr2="h44"/>
+%  <line x1="93.0341" y1="42.4195" x2="160.645" y2="42.0047" arr2="h44"/>
+%  <line x1="92.7576" y1="43.1109" x2="147.925" y2="89.0145" arr2="h44"/>
+%  <line x1="67.7318" y1="68.4132" x2="158.295" y2="45.0465" arr2="h44"/>
+%  <line x1="78.2399" y1="54.5868" x2="158.433" y2="44.3552" arr2="h44"/>
+%  <line x1="157.603" y1="85.8344" x2="179.034" y2="48.7797" arr2="h44"/>
+%  <text x="74.4553" y="0.168401" t="sexism" h="6"/>
+%  <text x="166.24" y="-38.1202" t="anger/liking" h="6"/>
+%  <text x="42.5724" y="-35.9189" t="Response_Choice" h="5"/>
+%  <text x="135.62" y="12.3975" t="respappr" h="6"/>
+%  <line x1="81.8347" y1="-29.6653" x2="135.758" y2="7.6384" arr2="h44"/>
+%  <line x1="85.7061" y1="-37.1315" x2="160.645" y2="-37.574" arr2="h44"/>
+%  <line x1="157.603" y1="6.25576" x2="179.034" y2="-30.799" arr2="h44"/>
+%  <curve arr2="h44" lc="red">87.3653,-3.3121 93.7254,-7.5983 97.182,-12.4375 101.053,-28.6144 100.777,-35.3894 100.639,-36.772</curve>
+%  <curve arr2="h44" lc="red">94.6933,1.80365 103.957,0.282701 110.179,-6.6305 110.732,-8.0131</curve>
+%</TpX>
+\begin{figure}
+\centering
+  \includegraphics[width=17.332cm,height=14.079cm]{12.png}
+\end{figure}

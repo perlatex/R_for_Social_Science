@@ -1,0 +1,7 @@
+# 广义线性模型 {#glm}
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+

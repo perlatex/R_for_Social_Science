@@ -1,0 +1,220 @@
+# 注意与选择 {#attention}
+
+
+## 引言
+
+本文系重复《The Power of Attention: Using Eye Gaze to Predict Other-Regarding and
+Moral Choices》(Psychological Science 2018, Vol. 29(11) 1878 –1889)这篇文章的学习笔记。
+[原文osf链接](https://osf.io/dv6ug/)。作者很慷慨的分享了原始数据。
+
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+library(haven)
+library(here)
+library(broom)
+```
+
+## 要从实验出发去理解数据结构
+
+动态的描述下实验过程
+
+- 被试坐在屏幕面前，屏幕一分为二，左右两块
+- 语音读题，屏幕出现答案选项
+- 被试眼睛会左右看题，然后选择，因此眼动仪会记录眼睛在屏幕各注视点的停留时间，
+注视点很多，笼统的分为0屏幕之外，1左屏幕，2右屏幕
+- 事实上，眼睛动议**累计**分别在这三个区域的眼睛注视时间
+- 如果1或者2的累计时间超过750ms,系统会认为该区域为target
+
+```{r echo=FALSE, out.width = "50%"}
+knitr::include_graphics(path = "images/attention.png")
+```
+
+
+一旦有了target，至此，眼睛会有五种可能的情况
+
+
+- 眼睛留在target
+
+  - 自主型：不在犹豫，眼睛不再晃动，立马做出选择       ( self_determined )
+  - 发呆型：迟迟不作选择                               ( timeout )
+
+
+- 眼睛移到non_target
+
+  - 自主型：不在犹豫，眼睛不再晃动，立马做出选择       ( self_determined )
+  - 发呆型：眼睛从target移到non-target, 迟迟不作选择   ( timeout )
+
+
+
+- 眼睛晃动
+
+  - 徘徊型：眼睛从target移到non-target, 再回到target。**强制终止的目的**是避免被试从答案中学习   ( interupted )
+         
+
+合并后，事实上是三种情形 ( self_determined, interupted, timeout)
+
+
+## 数据样本描述
+
+```{r}
+analysis <- read_dta(here("data", "psy", "GhaffariFiedler2018.dta"))
+```
+
+
+```{r}
+analysis %>% 
+  glimpse()
+```
+
+### 缺失值
+```{r}
+analysis %>% map_df(~sum(is.na(.))) %>% 
+  glimpse()
+```
+
+
+### 平均年龄
+
+```{r}
+analysis %>% 
+  distinct(subject, .keep_all = T) %>% 
+  summarise(mean_age = mean(age, na.rm = TRUE))
+```
+
+
+女性占比，1为女性，2为男性, 与文章对不上呢？
+文章是55.6% female participants
+
+```{r}
+analysis %>% 
+  distinct_at(vars(subject), .keep_all = T) %>% 
+  count(gender) %>% 
+  #filter(gender == 1 | gender == 2) %>% 
+	mutate(percent = scales::percent(n/sum(n), accuracy = 0.01) )
+```
+
+
+
+
+
+### 自我决定组、干扰组、超时组所占的比例
+
+自我决定组,干扰组以及超时组这三组(self_determined, interrupted, timeout)
+彼此独立，不会重叠。即一个变量为1，其他两个变量为0
+```{r}
+analysis %>%
+  dplyr::select(self_determined, interrupted, timeout) %>% 
+  mutate(th = pmap_dbl(., sum)) %>% 
+  count(th)
+```
+
+
+
+
+
+
+理解数据结构很重要，最初认为数据是 subject * trial == 120* 90行，然而 数据框的行数远远超这个。仔细解读，发现每一次试次，眼动仪还会记录注视点在屏幕AOI（0/1/2）每个区域的停留时间dur。而这里AOI为什么没有交错出现，是因为，AOI是一块区域，在这个区域上的注视点，都算是同一个AOI，也就是说，眼睛的位置动一下，小区域变化了，就增加一行，就会记录新的停留时间，AOI的值将会根据大区域是否变化而更新，而这个被试者在此被试(trial)的其他信息（总体信息，比如最后注视点，做什么选择）都是一样的。这个数据是tidy的。
+
+这里可以看到哪些变量发生变化
+
+```{r}
+analysis %>%
+  dplyr::filter(subject == 95, trial == 8) %>% 
+  map_df(
+    ~n_distinct(.)
+  )
+```
+也就是说在subject * trial下，只有dur，AOI，AOI_Bias，p_time_rel_round四个变量变化
+
+
+
+先排除无效试次的情况：
+
+- 被试看不到选项 compr == 1
+- 触发条件满足trigger > 2999, trigger < 4000
+- 被试未理解题意 participant_error == 1
+
+```{r}
+analysis %>%
+  dplyr::filter(participant_error == 0) %>%
+  dplyr::filter(trigger > 2999, trigger < 4000 ) %>% 
+  dplyr::filter(compr == 0) %>%
+  
+  distinct_at(vars(subject, trial), .keep_all = T) %>%
+  dplyr::select(self_determined, interrupted, timeout) %>%
+  map(
+    function(x) janitor::tabyl(x)
+  )
+```
+
+
+
+```{r}
+df <- analysis %>%
+  filter(participant_error == 0) %>%
+  filter(trigger > 2999, trigger < 4000 ) %>% 
+  filter(compr == 0) %>%
+
+  distinct_at(vars(subject, trigger, sum, respttime, 
+                   trial, target_right, choice_right,
+                   compr, age, gender, match, timeout,
+                   self_determined, lastfix_right2, lastfix_chosen,
+                   interrupted, participant_error)) 
+
+df
+```
+
+
+
+
+
+### 计算注视点、目标与选择一致的比例
+
+- lastfix_right2 == 1 最后注视点是右边的屏幕
+- lastfix_chosen == 1 选择的是最后注视点
+
+干扰组最后注视点和选项一致所占的比例。
+自我决定组最后注视点和选项一致所占的比例
+
+```{r}
+df %>% 
+  group_by(interrupted) %>% 
+  summarise(percent_self = mean(lastfix_chosen))
+```
+
+
+```{r}
+df %>% 
+  group_by(self_determined) %>% 
+  summarise(percent_self = mean(lastfix_chosen))
+```
+
+
+
+
+## logist 回归
+```{r}
+glm_mod <- df %>% 
+  dplyr::filter(interrupted == 1) %>% 
+  glm(choice_right ~ lastfix_right2, family = binomial(link = "logit"), 
+      data = .)
+
+glm_mod
+```
+
+
+```{r}
+exp(glm_mod$coefficients)
+```
+
+
+
+```{r, echo = F}
+# remove the objects
+rm(analysis, df, glm_mod)
+```
+
+```{r, echo = F, message = F, warning = F, results = "hide"}
+pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
+```
