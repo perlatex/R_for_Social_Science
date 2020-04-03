@@ -63,7 +63,7 @@ ggplot(
 
 ```{r}
 # prior for mu $\text{Normal}(178, 100)$
-ggplot(
+p1 <- ggplot(
   data = tibble(x = seq(from = 100, to = 250, by = .1)),
   aes(x = x, y = dnorm(x, mean = 178, sd = 20))
 ) +
@@ -73,7 +73,7 @@ ggplot(
 
 
 # prior for beta $\text{Normal}(0, 10)$
-tibble(beta = -40:40) %>%
+p2 <- tibble(beta = -40:40) %>%
   mutate(density = dnorm(beta, mean = 0, sd = 10)) %>%
   ggplot(aes(x = beta, ymin = 0, ymax = density)) +
   geom_ribbon(size = 0, fill = "royalblue") +
@@ -83,12 +83,15 @@ tibble(beta = -40:40) %>%
 
 
 # prior for sigma $\text{Uniform}(0, 50)$
-tibble(x = seq(from = -10, to = 60, by = .1)) %>%
+p3 <- tibble(x = seq(from = -10, to = 60, by = .1)) %>%
 
   ggplot(aes(x = x, y = dunif(x, min = 0, max = 50))) +
   geom_line() +
   scale_y_continuous(NULL, breaks = NULL) +
   theme(panel.grid = element_blank())
+
+library(patchwork)
+p1 + p2 + p3
 ```
 
 ## 模型
