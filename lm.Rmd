@@ -22,7 +22,7 @@ library(tidyverse)
 4. **Equal-variance **  
     - [所有的误差项具有同样方差](<https://www.zhihu.com/question/67473778>)
 
-这四个假设的首字母，合起来就是\alert{LINE}，这样很好记
+这四个假设的首字母，合起来就是LINE，这样很好记
 
 ## 案例
 ```{r}
