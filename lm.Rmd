@@ -96,6 +96,124 @@ p1 + p2 + p3
 
 ## 模型
 
+## 使用stan
+```{r}
+library(rstan)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+Sys.setenv(LOCAL_CPPFLAGS = "-march=native")
+```
+
+```{r}
+tb <- tibble(
+	weight = c(64, 68, 72)
+)
+
+
+
+
+# put into a list
+stan_dat <- list(
+	N = nrow(d2),
+	x = d2$weight,
+	y = d2$height,
+	M = nrow(tb),
+	new_x = tb$weight
+)
+
+
+
+
+fit <- stan(file = "./models/simple.stan", 
+			data = stan_dat,
+			iter = 41000, 
+			chains = 4, 
+			warmup = 40000, 
+			cores = 4)
+```
+
+```{r}
+stan_trace(fit)
+```
+
+
+```{r, eval=FALSE}
+# fit
+plot(fit)
+plot(fit, pars = c("alpha", "beta"))
+stan_trace(fit)
+stan_plot(fit, pars = c("alpha", "beta"))
+stan_hist(fit, pars = c("alpha", "beta"))
+stan_dens(fit, pars = c("alpha", "beta"))
+get_posterior_mean(fit)
+as.data.frame(fit) %>% as_tibble()
+```
+
+```{r, eval=FALSE}
+fit %>% tidybayes::spread_draws(alpha, beta)
+
+fit %>% tidybayes::spread_draws(new_y[n]) 
+fit %>% tidybayes::spread_draws(new_y[weight]) 
+fit %>% tidybayes::spread_draws(new_y[condition]) 
+
+fit %>% tidybayes::spread_draws(new_y[i]) %>% 
+	median_qi()
+```
+
+
+```{r, eval=FALSE}
+fit %>%
+	spread_draws(beta) %>%
+	ggplot(aes(y = 0, x = beta, fill = stat(x > .85))) +
+	stat_halfeyeh() +
+	geom_vline(xintercept = .85, linetype = "dashed") +
+	scale_fill_manual(values = c("gray80", "skyblue"))
+```
+
+
+
+```{r}
+library(tidybayes)
+# stanfit模型不能用add_predicted_draws(fit)， 很遗憾
+# 只有先写在.stan文件里
+post_draw1 <- fit %>% tidybayes::spread_draws(new_y[condition]) 
+post_draw1
+```
+
+
+```{r}
+prob_pred1 <- post_draw1 %>% 
+	group_by(condition) %>% 
+	summarise(
+		pred_height_mean = mean(new_y),
+		prob_above_line = mean(new_y >= 170)
+	)
+prob_pred1
+```
+
+
+```{r}
+post_draw1 %>% 
+	ggplot(aes(x = new_y, y = factor(condition), fill = stat(x > 170))) +
+	stat_halfeyeh() +
+	geom_vline(xintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue")) +
+	scale_x_continuous(limits = c(150, 200)) 
+```
+
+```{r}
+post_draw1 %>% 
+	ggplot(
+		aes(x = factor(condition), y = new_y, fill = stat(y > 170)) 
+	) +
+	stat_eye(side = "right") +
+	geom_hline(yintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue"))
+```
+
+## 使用brms
 ```{r}
 b4.3 <-
   brm(
@@ -114,7 +232,7 @@ b4.3 <-
 ```
 
 
-## 后验概率
+### 后验概率
 ```{r}
 plot(b4.3)
 ```
@@ -127,6 +245,23 @@ summary(b4.3)
 
 ```{r}
 posterior_samples(b4.3) %>% as_tibble()
+```
+
+
+
+```{r, eval=FALSE}
+names(b4.3)
+b4.3$prior
+
+
+brms::posterior_summary(b4.3)
+brms::posterior_summary(b4.3) %>% as.data.frame() %>% rownames_to_column()
+brms::posterior_samples(b4.3) %>% as_tibble()
+brms::posterior_samples(b4.3, add_chain = T) %>% as_tibble()
+
+# same as 
+tidybayes::get_variables(b4.3)
+tidybayes::spread_draws(b4.3, b_Intercept, b_weight, sigma, lp__)
 ```
 
 ## 预测
@@ -174,8 +309,9 @@ post %>%
 ### 多个值
 ```{r}
 tb <- tibble(
-  weight = c(50, 51, 52)
+	weight = c(64, 68, 72)
 )
+
 ```
 
 
@@ -184,7 +320,7 @@ tb <- tibble(
 post <-
   predict(b4.3, newdata = tb, summary = FALSE) %>%
   as_tibble() %>%
-  set_names(c(50, 51, 52)) %>%
+  set_names(c(64, 68, 72)) %>%
   mutate(iter = 1:n())
 post
 ```
@@ -193,9 +329,9 @@ post
 ```{r}
 prob_cut <- post %>%
   summarise(
-    at_50 = mean(`50` > 150),
-    at_51 = mean(`51` > 150),
-    at_52 = mean(`52` > 150)
+    at_64 = mean(`64` >= 170),
+    at_68 = mean(`68` >= 170),
+    at_72 = mean(`72` >= 170)
   )
 prob_cut
 ```
@@ -217,10 +353,10 @@ post_longer
 
 ```{r}
 post_longer %>%
-  ggplot(aes(x = height, y = factor(weight), fill = stat(x > 150))) +
+  ggplot(aes(x = height, y = factor(weight), fill = stat(x > 170))) +
   stat_halfeyeh() +
   geom_vline(
-    xintercept = 150, linetype = "dashed", size = 2,
+    xintercept = 170, linetype = "dashed", size = 2,
     color = "red"
   ) +
   scale_fill_manual(values = c("gray80", "skyblue")) +
@@ -228,3 +364,98 @@ post_longer %>%
   annotate(geom = "label", x = 160, y = 2.4, label = prob_cut$at_51) +
   annotate(geom = "label", x = 160, y = 3.4, label = prob_cut$at_52)
 ```
+
+
+### add_predicted_draws
+```{r}
+# 这里的add_predicted_draws  = predict() + as_tibble() + pivot_longer()
+post_draw <- tb %>% add_predicted_draws(b4.3) 
+post_draw
+```
+
+
+```{r}
+prob_pred <- post_draw %>% 
+	group_by(weight) %>% 
+	summarise(
+	 pred_height_mean = mean(.prediction),
+	 prob_above_line = mean(.prediction >= 170)
+	)
+prob_pred
+```
+
+
+```{r}
+# normal style
+post_draw %>% 
+	ggplot(aes(x = .prediction, y = factor(weight), fill = stat(x > 170))) +
+	stat_halfeyeh() +
+	geom_vline(xintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue")) +
+	scale_x_continuous(limits = c(150, 200))
+```
+
+
+```{r}
+# flip
+post_draw %>% 
+	ggplot(aes(x = .prediction, y = factor(weight), fill = stat(x > 170))) +
+	stat_halfeyeh() +
+	geom_vline(xintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue")) +
+	coord_flip()
+```
+
+
+```{r}
+# best
+post_draw %>% 
+	ggplot(
+		aes(x = factor(weight), y = .prediction, fill = stat(y > 170)) 
+		) +
+   	stat_eye(side = "right") +
+	geom_hline(yintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue"))
+```
+
+
+```{r, fig.asp= 0.816}
+# plot original data and predict data together
+library(ggforce)
+# https://davidsmale.netlify.com/portfolio/soviet-space-dogs-part-2/
+desc <- '未来三年进入双一流学科的概率'
+
+post_draw %>% 
+	ggplot(
+		aes(x = weight, y = .prediction, fill = stat(y > 170)) 
+	) +
+	stat_eye(side = "right") +
+	geom_point(data = d2, aes(x = weight, y = height)) +
+	geom_hline(yintercept = 170, linetype = "dashed", size = 2,
+			   color = "red") +
+	scale_fill_manual(values = c("gray80", "skyblue")) +
+	annotate("text", x = 35, y = 170 - 2, 
+			 label = "进入双一流学科的阈值线", size = 4, color = "red") +
+	geom_mark_ellipse(aes(x = 65, y = 190, 
+					   label = '贝叶斯预测', description = desc),
+					  #label.family = "Space Mono",
+					  label.fontsize = 11,
+					  label.colour = c("#CC79A7", "black"),
+					  label.fill = NA,
+					  label.buffer = unit(1, 'mm'), #间距
+					  colour = NA,
+					  fill = NA) +
+	geom_text(data = prob_pred, aes(x = weight + 2, 
+									y = pred_height_mean, 
+									label = scales::percent(prob_above_line))) +
+	theme_bw() +
+	theme(legend.position = "none") +
+	labs(title = "物理学科未来三年进入双一流学科的概率",
+		 subtitle = "基于引文量的贝叶斯预测",
+		 x = "时间（年）",
+		 y = "被引量")
+```
+
