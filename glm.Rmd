@@ -349,7 +349,7 @@ exp(coef(m))
 ### 边际效应(Marginal effects)
 
 即在其他条件不变的情况下，$x_i$增加一个单位，事件的平均发生次数会增加 $100\beta_1 \%$：
-
+类似求偏导$\frac{\partial{\lambda}}{\partial{x}}$
 
 
 ```{r}
@@ -357,7 +357,8 @@ margins::margins(m, type = "link")
 ```
 
 
-模型是非线性的，所以我们常用更直观的方式评估边际效应，即，自变量直接对因变量的贡献，可以令`type = "response"`，
+模型是非线性的，所以我们常用更直观的方式评估边际效应，即，自变量直接对因变量的贡献，可以令`type = "response"`，类似求偏导$\frac{\partial{y}}{\partial{x}}$
+
 
 
 ```{r}
@@ -490,7 +491,7 @@ glm(y ~ x,
 
 在案例中
 
-- 泊松回归 
+- log link
 
 ```{r, eval=FALSE}
 glm(number_of_fish ~ pollution_level, 
@@ -552,7 +553,7 @@ $$
 y_i = \exp(\beta_0 + \beta_1 x_i) * \exp(\epsilon_i), \quad \epsilon_i \sim \operatorname{normal}(0,\sigma)
 $$
 
-残差的方差也会随着均值变化。
+误差的方差也会随着均值变化。
 
 
 
@@ -571,8 +572,63 @@ regIGId <- glm(y ~ x, family = inverse.gaussian(link = "identity"))
 regIGlog <- glm(y ~ x, family = inverse.gaussian(link = "log"))
 ```
 
+```{r, eval=FALSE}
+dx <- tibble(
+  x = c(1, 2, 3, 4, 5),
+  y = c(1, 2, 4, 2, 6)
+)
+
+dx %>% 
+  ggplot(aes(x =x, y = y)) +
+  geom_point()
+```
+
+
+```{r, eval=FALSE}
+regNId <- glm(y ~ x, family = gaussian(link = "identity"), data = dx)
+regNId
+
+dx %>% 
+  mutate(pred = predict(regNId, type = "response")) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(aes(y = pred, group =1))
+```
+
+
+
+
+```{r, eval=FALSE}
+regPlog <- glm(y ~ x, family = poisson(link = "log"), data = dx)
+regPlog
+
+dx %>% 
+  mutate(pred = predict(regPlog, type = "response")) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(aes(y = pred, group =1))
+```
+
+
+```{r, eval=FALSE}
+regGId  <- glm(y ~ x, family = Gamma(link = "identity"), data = dx)
+regGId
+
+dx %>% 
+  mutate(pred = predict(regGId, type = "response")) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(aes(y = pred, group =1))
+```
+
 ### 更复杂的模型
 以后再说
+```{r, eval=FALSE}
+glm(number_of_fish ~ 1 +  (1| pollution_level), 
+         family = poisson(link = "log"),
+         data = df)
+```
+
 
 
 ## 小结
