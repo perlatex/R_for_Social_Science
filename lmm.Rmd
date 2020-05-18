@@ -412,9 +412,21 @@ un_pooling %>%
 
 ## 更多
 
+- 解释模型的含义
+```{r, eval=FALSE}
+lmer(salary ~ 1 +  (0 + experience | department), data = df)
+# vs
+lmer(salary ~ 1 + experience + (0 + experience | department), data = df)
+```
 
 
+```{r}
+lmer(salary ~ 1 +  ( 1  +  experience | department),  data = df)
+# vs
+lmer(salary ~ 1 +  ( 1 | department) +  (0 +  experience | department),  data = df)
+```
 
+- 课后阅读[文献](https://peerj.com/articles/4794/)，读完后大家一起分享
 
 
  
