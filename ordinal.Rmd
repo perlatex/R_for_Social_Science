@@ -77,6 +77,24 @@ df %>% count(edu_m)
 ### 父母门当户对？
 
 数据还是比较有意思的，我们来看看父母是否门当户对
+
+
+多大比例选择门当户对
+```{r}
+df %>% count(edu_m, edu_f) %>% 
+  group_by(edu_m) %>% 
+  mutate(prop = n /sum(n)) %>% 
+  ungroup() %>% 
+  mutate(
+    eq_prop = if_else(edu_m == edu_f, prop, 0)
+    ) %>% 
+  summarise(
+    all = sum(eq_prop)/5
+)
+
+```
+
+
 ```{r}
 df %>% 
   count(edu_m, edu_f) %>% 
@@ -158,12 +176,13 @@ summary(mod_mass)
 
 $$
 \begin{aligned}
-\text{logit}(\hat{P}(Y \le 1))&= \text{logit}\left(p_{1}\right) = \ln \left(\frac{p_{1}}{1 - p_{1}}\right) = \\ 
-\text{logit}(\hat{P}(Y \le 2))&= \text{logit}\left(p_{1} + p_{2}\right) = \ln \left(\frac{p_{1} + p_{2}}{1 - p_{1} - p_{2}}\right) = \\ 
-\text{logit}(\hat{P}(Y \le 3))&= \text{logit}\left(p_{1} + p_{2} + p_{3}\right) = \ln \left(\frac{p_{1} + p_{2} + p_{3}}{1 - p_{1} - p_{2} - p_{3}}\right) = \\ 
-\text{logit}(\hat{P}(Y \le 4))&= \text{logit}\left(p_{1} + p_{2} + p_{3} + p_{4}\right) = \ln \left(\frac{p_{1} + p_{2} + p_{3} + p_{4}}{1 - p_{1} - p_{2} - p_{3} - p_{4}}\right) = \\ 
+\text{logit}(\hat{P}(Y \le 1))&= \text{logit}\left(p_{1}\right) = \ln \left(\frac{p_{1}}{1 - p_{1}}\right) =  -0.8385 + \\ 
+\text{logit}(\hat{P}(Y \le 2))&= \text{logit}\left(p_{1} + p_{2}\right) = \ln \left(\frac{p_{1} + p_{2}}{1 - p_{1} - p_{2}}\right) =  0.6742 + \\ 
+\text{logit}(\hat{P}(Y \le 3))&= \text{logit}\left(p_{1} + p_{2} + p_{3}\right) = \ln \left(\frac{p_{1} + p_{2} + p_{3}}{1 - p_{1} - p_{2} - p_{3}}\right) =  2.5093\\ 
+\text{logit}(\hat{P}(Y \le 4))&= \text{logit}\left(p_{1} + p_{2} + p_{3} + p_{4}\right) = \ln \left(\frac{p_{1} + p_{2} + p_{3} + p_{4}}{1 - p_{1} - p_{2} - p_{3} - p_{4}}\right) = 3.5454\\ 
 \end{aligned}
 $$
+
 
 
 写起很麻烦，偷个懒吧
@@ -190,7 +209,7 @@ coef(mod_mass) %>% exp()
 - 在其它因素不变的情况下，父亲教育程度每增加一个等级（比如，大专到本科），
   会增加子女教育程度向上提高一个级别的概率1.58倍，也就是增加了58%。
 - 在其它因素不变的情况下，母亲教育程度每提高一个等级，会增加提升子女教育水平的概率1.66倍
-- 从子女的性别差异来看, 在其它因素不变的情况下，女性的受教育水平向上提高一个级别的概率更大，是男性的(1/0.630)倍
+- 从子女的性别差异来看, 在其它因素不变的情况下，女性的受教育水平向上提高一个级别的概率更大，是男性的(1/0.630)倍，或者说，男性受教育水平向上提高一个级别的概率比女性减少37%(1 - 0.63)
 - 从城乡差异来看，城镇子女提升教育水平的概率是农村的2.6倍
 
 
