@@ -57,6 +57,20 @@ df <- tb %>%
   )
 df
 ```
+看起很复杂？那我写简单点
+
+
+```{r}
+tb %>%
+  mutate(
+    across(
+      starts_with("edu"),
+      ~ if_else(. %in% c(5, 6, 7, 8), 5, .)
+    )
+  )
+```
+
+
 
 ```{r}
 df %>% count(edu)
@@ -79,19 +93,26 @@ df %>% count(edu_m)
 数据还是比较有意思的，我们来看看父母是否门当户对
 
 
-多大比例选择门当户对
+多大比例选择门当户对?
 ```{r}
-df %>% count(edu_m, edu_f) %>% 
+df
+```
+
+```{r}
+df %>% 
+  summarise(
+    eq_n = sum(edu_m == edu_f),
+    n = n()
+) %>% 
+  mutate(prop = eq_n/n)
+```
+
+```{r}
+df %>% 
+  count(edu_m, edu_f) %>% 
   group_by(edu_m) %>% 
   mutate(prop = n /sum(n)) %>% 
-  ungroup() %>% 
-  mutate(
-    eq_prop = if_else(edu_m == edu_f, prop, 0)
-    ) %>% 
-  summarise(
-    all = sum(eq_prop)/5
-)
-
+  ungroup() 
 ```
 
 
@@ -208,8 +229,8 @@ coef(mod_mass) %>% exp()
 
 - 在其它因素不变的情况下，父亲教育程度每增加一个等级（比如，大专到本科），
   会增加子女教育程度向上提高一个级别的概率1.58倍，也就是增加了58%。
-- 在其它因素不变的情况下，母亲教育程度每提高一个等级，会增加提升子女教育水平的概率1.66倍
-- 从子女的性别差异来看, 在其它因素不变的情况下，女性的受教育水平向上提高一个级别的概率更大，是男性的(1/0.630)倍，或者说，男性受教育水平向上提高一个级别的概率比女性减少37%(1 - 0.63)
+- 在其它因素不变的情况下，母亲教育程度每提高一个等级，会增加提升子女教育水平的概率1.66倍.
+- 从子女的性别差异来看, 在其它因素不变的情况下，女性的受教育水平向上提高一个级别的概率更大，是男性的(1/0.630)倍，或者说，男性受教育水平向上提高一个级别的概率比女性减少37%(1 - 0.63).
 - 从城乡差异来看，城镇子女提升教育水平的概率是农村的2.6倍
 
 
@@ -258,5 +279,24 @@ mod_brms
 brms::conditional_effects(mod_brms, categorical = TRUE)
 ```
 
+个人感觉这个问题似乎没那么简单，我还需要继续看文档。
+```{r}
+fit <- brm(
+  #rating ~ period + carry + cs(treat),
+  edu ~ edu_f + edu_m + sex + num_siblings + urban,
+  data = df1,
+  family = sratio("logit")
+)
+```
 
+
+```{r}
+summary(fit)
+```
+
+
+
+```{r}
+conditional_effects(fit, "edu_m", categorical = TRUE)
+```
 
