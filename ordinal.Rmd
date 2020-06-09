@@ -243,6 +243,7 @@ me_mass <- marginal_effects(mod_mass, variables = "edu_m")
 me_mass 
 ```
 
+
 从边际效应图可以看到，随着父母教育程度的增加，子女低学历的的概率减少，高学历的概率增加
 
 ## 其他宏包
@@ -264,18 +265,26 @@ broom::tidy(mod_ordinal)
 
 ```{r message=TRUE, warning=TRUE, include=FALSE}
 library(brms)
-mod_brms <- brm(edu ~ edu_f + edu_m + sex + num_siblings + urban,
+df1 <- df %>% 
+  mutate(
+    across(c(edu, sex, urban), as.factor), 
+    across(edu, ~fct_inseq(., ordered = TRUE))
+    )  
+
+mod_brms1 <- brm(edu ~ edu_f + edu_m + sex + num_siblings + urban,
                 data = df1,  
                 family = cumulative(link = "logit")
                )
-mod_brms
 ```
 
+```{r}
+mod_brms1
+```
 
 
 ```{r}
 conditions <- data.frame(edu = 1:5)
-brms::conditional_effects(mod_brms, 
+brms::conditional_effects(mod_brms1, 
                           effects = "edu_m", 
                           conditions = conditions,
                           categorical = TRUE)
@@ -284,7 +293,7 @@ brms::conditional_effects(mod_brms,
 
 
 ```{r}
-brms::conditional_effects(mod_brms, effects = "edu_m", categorical = TRUE)
+brms::conditional_effects(mod_brms1, effects = "edu_m", categorical = TRUE)
 ```
 
 ## 后续
@@ -323,7 +332,6 @@ mod_brms2 <- brm(edu ~ edu_f + edu_m + sex + num_siblings + urban,
                 data = df2,  
                 family = cumulative(link = "logit")
                )
-mod_brms2
 ```
 
 ```{r}
@@ -341,13 +349,12 @@ brms::conditional_effects(mod_brms2, effects = "edu_m", categorical = TRUE)
 category specific effects
 ```{r}
 mod_brms3 <- brm(
-  #rating ~ period + carry + cs(treat),
   edu ~ edu_f + edu_m + cs(sex) + num_siblings + urban,
   data = df2,
   family = sratio("logit")
 )
 ```
-之前我们假定子女性别在子女受教育程度中的影响时等同的，事实上，在这种假设也有不完全正确，性别在子女不同等级的教育程度中的影响是不一样的，比如初等教育，性别没有差异，而到了高等教育，性别的差异就明显了。也就说，性别在子女教育不同等级上的影响(系数)是不同。
+
 
 ```{r}
 summary(mod_brms3)
@@ -357,5 +364,82 @@ summary(mod_brms3)
 
 ```{r}
 brms::conditional_effects(mod_brms3, "edu_m", categorical = TRUE)
+```
+
+## 符合实际的模型
+
+子女教育程度是sequential过程
+
+
+
+
+```{r}
+library(brms)
+df3 <- df %>% 
+  mutate(
+    across(c(edu, sex, urban), as.factor), 
+    across(edu, ~fct_inseq(., ordered = TRUE))
+    )  
+
+mod_brms3 <- brm(
+  edu ~ edu_f + edu_m + cs(sex) + num_siblings + urban,
+  data = df3,
+  family = sratio("logit")
+)
+```
+
+
+```{r}
+mod_brms1
+```
+
+
+```{r}
+mod_brms3
+```
+
+
+
+```{r}
+brms::conditional_effects(mod_brms3, effects = "edu_m", categorical = TRUE)
+```
+
+
+父母教育程度的提高，子女高学历的增多，低学历的减少
+
+```{r}
+brms::conditional_effects(mod_brms3, effects = "sex", categorical = TRUE)
+```
+之前我们假定子女性别在子女受教育程度中的影响时等同的，事实上，在这种假设也有不完全正确，性别在子女不同等级的教育程度中的影响是不一样的，比如初等教育，性别没有差异，而到了高等教育，性别的差异就明显了。也就说，性别在子女教育不同等级上的影响(系数)是不同。
+
+
+```{r}
+library(brms)
+df4 <- df %>% 
+  mutate(
+    across(c(edu, sex, urban), as.factor), 
+    across(edu, ~fct_inseq(., ordered = TRUE))
+    )  
+
+mod_brms4 <- brm(
+  edu ~ edu_f + edu_m + sex + num_siblings + urban,
+  data = df4,
+  family = sratio("cloglog")
+)
+```
+
+
+```{r}
+brms::conditional_effects(mod_brms4, effects = "sex", categorical = TRUE)
+```
+
+
+- 男孩获得较低层次教育的概率要比女还大
+- 女孩获得较高层次教育的概率要比男还大
+
+## 模型比较
+```{r}
+#brms::loo(mod_brms1, mod_brms2, mod_brms3, mod_brms4)
+brms::loo(mod_brms1, mod_brms3, mod_brms4)
 ```
 
